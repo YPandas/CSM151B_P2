@@ -141,14 +141,14 @@ pipeline_trace_t* Scoreboard::writeback() {
     
     // TODO: 
     // clear RST by invalidating current ROB entry to -1
-    RST_[fu_entry.rob_index].valid = false;
+    RST_[fu_entry.rob_index] = -1;
         
     // TODO: 
     // notify the ROB about completion (using ROB->Completed.send())
-    ROB->Completed.send(fu_entry.trace);
+    ROB->Completed.send(fu_entry.rob_index);
     // TODO: 
     // deallocate the RS entry of this FU
-    RS_[fu_entry.rs_index].valid = false;
+    RS_[fu_entry.rs_index].valid = -1;
     // set the returned trace
     trace = fu_entry.trace;
 
