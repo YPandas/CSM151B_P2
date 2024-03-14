@@ -1,10 +1,10 @@
 // Copyright 2024 Blaise Tine
-// 
+//
 // Licensed under the Apache License;
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 // http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,21 +12,33 @@
 // limitations under the License.
 
 #pragma once
+#include "types.h"
 
-namespace tinyrv {
+namespace tinyrv
+{
 
-struct pipeline_trace_t;
+    struct pipeline_trace_t;
 
-class GShare {
-public:
-  GShare();
+    class GShare
+    {
+    public:
+        GShare();
 
-  ~GShare();
+        ~GShare();
 
-  bool predict(pipeline_trace_t* trace);
+        bool predict(pipeline_trace_t *trace);
 
-private:  
-  
-};
+    private:
+        char bhr = 0x0; // 8-bit BHR
+        char bht[256];
+        Word btb[256];
+        // TSFR_TAB: transfer table [current_state][action] -> new_state
+        char const TSFR_TAB[4][2] = {
+            {0, 1}, // strongly not taken
+            {0, 2}, // weakly not taken
+            {1, 3}, // weakly taken
+            {2, 3}  // strongly taken
+        };
+    };
 
 }

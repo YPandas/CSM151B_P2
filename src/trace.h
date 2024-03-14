@@ -67,6 +67,10 @@ public:
   // additional trace data
   ITraceData::Ptr data;
 
+  // trace data for updating GShare
+  bool actual_taken = false;
+  Word next_pc = 0x0;
+
   pipeline_trace_t(uint64_t uuid, Word PC) 
     : uuid(uuid)
     , PC(PC)    
