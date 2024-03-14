@@ -46,6 +46,8 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
   auto rs2    = instr.getRSrc(1);
   auto imm    = sext((Word)instr.getImm(), 32);
 
+  trace->actual_taken = false;
+
   // Register File access
   reg_data_t rsdata [2];
   auto num_rsrcs = instr.getNRSrc();
@@ -213,14 +215,11 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     trace->alu_op = AluOp::BRANCH;    
     trace->rs1 = rs1;
     trace->rs2 = rs2;
-    bool taken = false; // we use a flag to flag all the taken cases
-    // this is needed to avoid special cases such as "no effect but taken"
     switch (func3) {
     case 0: {
       // RV32I: BEQ
       if (rsdata[0].i == rsdata[1].i) {
         next_pc = PC_ + imm;
-        taken = true;
       }
       break;
     }
@@ -228,7 +227,6 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
       // RV32I: BNE
       if (rsdata[0].i != rsdata[1].i) {
         next_pc = PC_ + imm;
-        taken = true;
       }
       break;
     }
@@ -236,7 +234,6 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
       // RV32I: BLT
       if (rsdata[0].i < rsdata[1].i) {
         next_pc = PC_ + imm;
-        taken = true;
       }
       break;
     }
@@ -244,7 +241,6 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
       // RV32I: BGE
       if (rsdata[0].i >= rsdata[1].i) {
         next_pc = PC_ + imm;
-        taken = true;
       }
       break;
     }
@@ -259,17 +255,12 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
       // RV32I: BGEU
       if (rsdata[0].u >= rsdata[1].u) {
         next_pc = PC_ + imm;
-        taken = true;
       }
       break;
     }
     default:
       std::abort();
     }
-    // update actual_taken & next PC
-    // as instructed in https://campuswire.com/c/G259DFD21/feed/242
-    trace->next_pc = next_pc;
-    trace->actual_taken = taken;
     break;
   }  
   case Opcode::JAL: {
@@ -279,6 +270,7 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     rddata.i = next_pc;
     next_pc = PC_ + imm;
     rd_write = true;
+    // trace->actual_taken = true;
     break;
   }  
   case Opcode::JALR: {
@@ -289,6 +281,7 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     rddata.i = next_pc;
     next_pc = rsdata[0].i + imm;
     rd_write = true;
+    // trace->actual_taken = true;
     break;
   }
   case Opcode::L: {
@@ -465,8 +458,13 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
   }
 
   PC_ += 4;
+  
   if (PC_ != next_pc) {
     DP(3, "*** Next PC=0x" << std::hex << next_pc << std::dec);
     PC_ = next_pc;
+    // update actual_taken & next PC
+    // as instructed in https://campuswire.com/c/G259DFD21/feed/242
+    trace->next_pc = next_pc;
+    trace->actual_taken = true;
   }
 }

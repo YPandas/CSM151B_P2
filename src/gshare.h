@@ -29,16 +29,9 @@ namespace tinyrv
         bool predict(pipeline_trace_t *trace);
 
     private:
-        char bhr = 0x0; // 8-bit BHR
-        char bht[256];
+        uint8_t bhr = 0x0; // 8-bit BHR
+        uint8_t bht[256];
         Word btb[256];
-        // TSFR_TAB: transfer table [current_state][action] -> new_state
-        char const TSFR_TAB[4][2] = {
-            {0, 1}, // strongly not taken
-            {0, 2}, // weakly not taken
-            {1, 3}, // weakly taken
-            {2, 3}  // strongly taken
-        };
     };
 
 }

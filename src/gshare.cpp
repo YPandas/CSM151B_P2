@@ -19,6 +19,7 @@
 #include "core.h"
 #include "debug.h"
 #include "trace.h"
+#include <cstdio>
 
 using namespace tinyrv;
 
@@ -27,8 +28,11 @@ GShare::GShare()
     //--
     bhr = 0x0; // 8-bit BHR
     int broom = 0xFF;
-    while(broom --> 0) btb[broom] = bht[broom] = 0x0;
-    
+    while (broom-- > 0)
+    {
+        bht[broom] = 0x0;
+        btb[broom] = -1;
+    }
 }
 
 GShare::~GShare()
@@ -38,17 +42,33 @@ GShare::~GShare()
 
 bool GShare::predict(pipeline_trace_t *trace)
 {
+    uint8_t pc_byte = (trace->PC >> 2) & 0xFF; // 30-bit PC
     // strictly following the steps...
-    Word predicted_next_pc = this->btb[trace->PC & 0xFF];
-    unsigned int index = this->bhr ^ (trace->PC & 0xFF);
-    bool predicted_taken = (this->bht[index] < 2);
+    unsigned int index = (this->bhr ^ pc_byte) & 0xFF;
+    Word predicted_next_pc = this->btb[pc_byte];
+    bool predicted_taken = (this->bht[index] >= 2);
+
+    // debug print
+    // printf("BHR = 0x%x, pc_byte = 0x%x, index = %u, this->bht[index] = 0x%x\n", this->bhr, pc_byte, index, this->bht[index]);
+    DP(3, "*** GShare: "
+              << "BHR=0x" << std::hex << (int)this->bhr << ", PHT_index="
+              << index << ", PHT_taken=" << predicted_taken << ", BTB_nextPC=0x"
+              << predicted_next_pc << ": " << *trace);
     // determine if the prediction is correct
-    bool ans = (predicted_taken && predicted_next_pc == trace->next_pc) ||
+    bool ans = (predicted_taken && (predicted_next_pc<<2) == trace->next_pc) ||
                (!predicted_taken && !trace->actual_taken);
+    // another debug log
+    DP(3, "*** GShare: predicted " << (predicted_taken ? "taken" : "not-taken")
+                                   << "=" << ans << ": " << *trace);
+    
     // update with actual result (hacking weak typing)
     if (trace->actual_taken)
-        this->btb[trace->PC & 0xFF] = trace->next_pc;
-    this->bht[index] = this->TSFR_TAB[this->bht[index]][trace->actual_taken];
-    this->bhr = (this->bhr << 1) & trace->actual_taken;
+        this->btb[pc_byte] = ((trace->next_pc)>>2);
+    if(trace->actual_taken) {
+        if(this->bht[index] + 1 < 4)this->bht[index] ++;
+    } else {
+        if(this->bht[index] != 0)this->bht[index] --;
+    }
+    this->bhr = ((this->bhr << 1) | (trace->actual_taken?1:0)) & 0xFF;
     return ans;
 }
