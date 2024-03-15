@@ -19,7 +19,15 @@
 #include "core.h"
 #include "debug.h"
 #include "trace.h"
+#include "hashlib.h"
 #include <cstdio>
+
+#include <chrono>
+
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::nanoseconds;
 
 using namespace tinyrv;
 
@@ -34,6 +42,7 @@ GShare::GShare()
         btb_target[broom] = -1;
         btb_meta[broom] = 0;
     }
+    total_hash_time = 0;
 }
 
 GShare::~GShare()
@@ -46,7 +55,14 @@ bool GShare::predict(pipeline_trace_t *trace)
     uint8_t pc_index = (trace->PC >> 2) & 0xFF; // 30-bit PC
     uint32_t pc_tag = (trace->PC >> 2) >> 8; // adopting slides.
     // strictly following the steps...
-    unsigned int index = (this->bhr ^ pc_index) & 0xFF;
+    auto st = high_resolution_clock::now();
+    uint8_t hashed = HASH_FUNC(this->bhr, pc_index);
+    auto et = high_resolution_clock::now();
+    auto ns_int = duration_cast<nanoseconds>(et-st);
+    this->total_hash_time += ns_int.count();
+    std::cout << "TIMING#" << HASH_FUNC_NAME << "," 
+              << ns_int.count() << std::endl;
+    unsigned int index = hashed & 0xFF;
     Word predicted_next_pc = this->btb_target[pc_index];
     // evil meta-progamming
     EXTRACT_BTB_META(this->btb_meta[pc_index], valid, tag);

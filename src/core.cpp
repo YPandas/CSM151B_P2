@@ -23,6 +23,7 @@
 #include "inorder.h"
 #include "scoreboard.h"
 #include "FU.h"
+#include "hashlib.h"
 
 using namespace tinyrv;
 
@@ -96,6 +97,9 @@ void Core::issue() {
         } else {
           perf_stats_.correct_predictions ++;
         }
+        std::cout << "BENCHMARK#" << HASH_FUNC_NAME << ","
+                  << std::dec << perf_stats_.correct_predictions
+                  << "," << perf_stats_.predictions << std::endl;
       } else {      
         DT(3, "*** branch stalled!: " << *trace);
         branch_stalls_ = 2;
@@ -154,10 +158,15 @@ void Core::attach_ram(RAM* ram) {
 
 void Core::showStats() {
   if(gshare_enabled) {
-    double accuracy = 0;
-    if(perf_stats_.predictions != 0)
+    double accuracy = 0, avg_hashtime = 0;
+    if(perf_stats_.predictions != 0) {
       accuracy = perf_stats_.correct_predictions * 100.0 / (double)perf_stats_.predictions;
-    std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs << ", cycles=" << perf_stats_.cycles << ", bpred=" << (int)(accuracy) << "%" << std::endl;
+      avg_hashtime = this->gshare_.getTotalHashTime() / (double)perf_stats_.predictions;
+    }
+    std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs 
+    << ", cycles=" << perf_stats_.cycles 
+    << ", bpred=" << (int)(accuracy) << "%"
+    << ", hashtime="<< std::setprecision(6) << avg_hashtime << std::endl;
     // DP(3, "*** Stats"<<"correct="<<perf_stats_.correct_predictions<<", total="<< perf_stats_.predictions <<std::endl);
   } else {
     std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs << ", cycles=" << perf_stats_.cycles << std::endl;
