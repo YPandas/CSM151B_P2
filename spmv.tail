@@ -1,0 +1,10 @@
+DEBUG Instr 0x100193: ADDI x3, x0, 0x1
+DEBUG Src0 Reg: x0={0x0}
+DEBUG Dest Reg: x3={0x1}
+TRACE    5265768: pipeline-issue: PC=0x80000214, wb=1, rd=x3, ex=ALU (#1277)
+TRACE    5265769: pipeline-execute: PC=0x80000214, wb=1, rd=x3, ex=ALU (#1277)
+DEBUG Fetch: PC=0x80000218 (#1278)
+DEBUG Instr 0x73: ECALL 0x0
+TRACE    5265769: pipeline-issue: PC=0x80000218, wb=0, ex=ALU (#1278)
+PASSED!
+PERF: instrs=1982834, cycles=5265770, bpred=77%

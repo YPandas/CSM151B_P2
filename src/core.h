@@ -40,10 +40,14 @@ public:
   struct PerfStats {
     uint64_t cycles;
     uint64_t instrs;
+    uint64_t predictions, correct_predictions;
+
 
     PerfStats() 
       : cycles(0)
       , instrs(0)
+      , predictions(0)
+      , correct_predictions(0)
     {}
   };
 

@@ -88,12 +88,15 @@ void Core::issue() {
     if (trace->fu_type == FUType::ALU 
      && trace->alu_op == AluOp::BRANCH) {
       if (gshare_enabled) {
+        perf_stats_.predictions ++;
         if (!gshare_.predict(trace)) {
           DT(3, "*** branch stalled!: " << *trace);
           branch_stalls_ = 2;
           return;
+        } else {
+          perf_stats_.correct_predictions ++;
         }
-      } else {        
+      } else {      
         DT(3, "*** branch stalled!: " << *trace);
         branch_stalls_ = 2;
         return;
@@ -150,5 +153,13 @@ void Core::attach_ram(RAM* ram) {
 }
 
 void Core::showStats() {
-  std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs << ", cycles=" << perf_stats_.cycles << std::endl;
+  if(gshare_enabled) {
+    double accuracy = 0;
+    if(perf_stats_.predictions != 0)
+      accuracy = perf_stats_.correct_predictions * 100.0 / (double)perf_stats_.predictions;
+    std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs << ", cycles=" << perf_stats_.cycles << ", bpred=" << (int)(accuracy) << "%" << std::endl;
+    // DP(3, "*** Stats"<<"correct="<<perf_stats_.correct_predictions<<", total="<< perf_stats_.predictions <<std::endl);
+  } else {
+    std::cout << std::dec << "PERF: instrs=" << perf_stats_.instrs << ", cycles=" << perf_stats_.cycles << std::endl;
+  }
 }
