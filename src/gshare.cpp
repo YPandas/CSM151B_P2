@@ -31,7 +31,8 @@ GShare::GShare()
     while (broom --> 0) // sweep it!
     {
         bht[broom] = 0x0;
-        btb[broom] = -1;
+        btb_target[broom] = -1;
+        btb_meta[broom] = 0;
     }
 }
 
@@ -42,12 +43,16 @@ GShare::~GShare()
 
 bool GShare::predict(pipeline_trace_t *trace)
 {
-    uint8_t pc_byte = (trace->PC >> 2) & 0xFF; // 30-bit PC
+    uint8_t pc_index = (trace->PC >> 2) & 0xFF; // 30-bit PC
+    uint32_t pc_tag = (trace->PC >> 2) >> 8; // adopting slides.
     // strictly following the steps...
-    unsigned int index = (this->bhr ^ pc_byte) & 0xFF;
-    Word predicted_next_pc = this->btb[pc_byte];
-    bool predicted_taken = (this->bht[index] >= 2);
+    unsigned int index = (this->bhr ^ pc_index) & 0xFF;
+    Word predicted_next_pc = this->btb_target[pc_index];
+    // evil meta-progamming
+    EXTRACT_BTB_META(this->btb_meta[pc_index], valid, tag);
+    if(!valid || tag != pc_tag) predicted_next_pc = -1;
 
+    bool predicted_taken = (this->bht[index] >= 2);
     // debug print
     // printf("BHR = 0x%x, pc_byte = 0x%x, index = %u, this->bht[index] = 0x%x\n", this->bhr, pc_byte, index, this->bht[index]);
     DP(3, "*** GShare: "
@@ -62,15 +67,11 @@ bool GShare::predict(pipeline_trace_t *trace)
                                    << "=" << ans << ": " << *trace);
 
     // update with actual result (hacking weak typing)
-    if (trace->actual_taken)
-        this->btb[pc_byte] = ((trace->next_pc) >> 2);
-    // if (this->btb[pc_byte] == 0)
-    // {
-    //     DP(3, "*** GShare: ouch! "
-    //               << " BTB_index=" << (uint)pc_byte
-    //               << ", trace->next_pc=0x" << (uint32_t)trace->next_pc
-    //               << " 30bit=0x"<<(uint32_t)((trace->next_pc) >> 2));
-    // }
+    if (trace->actual_taken) {
+        this->btb_target[pc_index] = ((trace->next_pc) >> 2);
+        this->btb_meta[pc_index] = BUILD_BTB_META(pc_tag, 1);
+    }
+
     if (trace->actual_taken)
     {
         if (this->bht[index] + 1 < 4)

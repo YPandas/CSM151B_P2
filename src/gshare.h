@@ -13,7 +13,11 @@
 
 #pragma once
 #include "types.h"
-
+#define BTB_VALID_BIT(x) (((x)>>22)&1)
+#define BTB_TAG(x) ((x)&0x3fffff) 
+#define EXTRACT_BTB_META(meta, valid, tag) uint8_t valid=(BTB_VALID_BIT(meta));uint32_t tag=(BTB_TAG(meta))
+#define BUILD_BTB_META(tag, valid) ((((valid)&1)<<22)|((tag)&0x3fffff))
+// crop lower 22bit: 0x3fffff = 0b1111111111111111111111
 namespace tinyrv
 {
 
@@ -31,7 +35,8 @@ namespace tinyrv
     private:
         uint8_t bhr = 0x0; // 8-bit BHR
         uint8_t bht[256];
-        Word btb[256];
+        Word btb_target[256];
+        uint32_t btb_meta[256]; // 32-8-2 = 22 bit tag; 1 valid bit
     };
 
 }
