@@ -458,13 +458,12 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
   }
 
   PC_ += 4;
-  
+  trace->next_pc = next_pc;
   if (PC_ != next_pc) {
     DP(3, "*** Next PC=0x" << std::hex << next_pc << std::dec);
     PC_ = next_pc;
     // update actual_taken & next PC
     // as instructed in https://campuswire.com/c/G259DFD21/feed/242
-    trace->next_pc = next_pc;
     trace->actual_taken = true;
   }
 }

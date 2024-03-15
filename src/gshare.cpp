@@ -27,8 +27,8 @@ GShare::GShare()
 {
     //--
     bhr = 0x0; // 8-bit BHR
-    int broom = 0xFF;
-    while (broom-- > 0)
+    int broom = 256;
+    while (broom --> 0) // sweep it!
     {
         bht[broom] = 0x0;
         btb[broom] = -1;
@@ -55,20 +55,32 @@ bool GShare::predict(pipeline_trace_t *trace)
               << index << ", PHT_taken=" << predicted_taken << ", BTB_nextPC=0x"
               << predicted_next_pc << ": " << *trace);
     // determine if the prediction is correct
-    bool ans = (predicted_taken && (predicted_next_pc<<2) == trace->next_pc) ||
+    bool ans = (predicted_taken && ((predicted_next_pc << 2) == trace->next_pc)) ||
                (!predicted_taken && !trace->actual_taken);
     // another debug log
     DP(3, "*** GShare: predicted " << (predicted_taken ? "taken" : "not-taken")
                                    << "=" << ans << ": " << *trace);
-    
+
     // update with actual result (hacking weak typing)
     if (trace->actual_taken)
-        this->btb[pc_byte] = ((trace->next_pc)>>2);
-    if(trace->actual_taken) {
-        if(this->bht[index] + 1 < 4)this->bht[index] ++;
-    } else {
-        if(this->bht[index] != 0)this->bht[index] --;
+        this->btb[pc_byte] = ((trace->next_pc) >> 2);
+    // if (this->btb[pc_byte] == 0)
+    // {
+    //     DP(3, "*** GShare: ouch! "
+    //               << " BTB_index=" << (uint)pc_byte
+    //               << ", trace->next_pc=0x" << (uint32_t)trace->next_pc
+    //               << " 30bit=0x"<<(uint32_t)((trace->next_pc) >> 2));
+    // }
+    if (trace->actual_taken)
+    {
+        if (this->bht[index] + 1 < 4)
+            this->bht[index]++;
     }
-    this->bhr = ((this->bhr << 1) | (trace->actual_taken?1:0)) & 0xFF;
+    else
+    {
+        if (this->bht[index] != 0)
+            this->bht[index]--;
+    }
+    this->bhr = ((this->bhr << 1) | (trace->actual_taken ? 1 : 0)) & 0xFF;
     return ans;
 }
