@@ -31,6 +31,7 @@ using std::chrono::nanoseconds;
 
 using namespace tinyrv;
 
+static int prev = 0;
 GShare::GShare()
 {
     //--
@@ -59,9 +60,12 @@ bool GShare::predict(pipeline_trace_t *trace)
     uint8_t hashed = HASH_FUNC(this->bhr, pc_index);
     auto et = high_resolution_clock::now();
     auto ns_int = duration_cast<nanoseconds>(et-st);
-    this->total_hash_time += ns_int.count();
+    long long duration = ns_int.count();
+    if(duration - prev > 1024) duration = prev; // remove spike
+    prev = duration;
+    this->total_hash_time += duration;
     std::cout << "TIMING#" << HASH_FUNC_NAME << "," 
-              << ns_int.count() << std::endl;
+              << duration << std::endl;
     unsigned int index = hashed & 0xFF;
     Word predicted_next_pc = this->btb_target[pc_index];
     // evil meta-progamming

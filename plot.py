@@ -8,13 +8,16 @@ lines = []
 with open(sys.argv[1], 'r') as fr:
     lines = fr.readlines()
     
-X = []
+X = {}
 Y = {}
 for line in lines:
     if 'BENCHMARK#' in line:
         name, correct, total = line.replace('BENCHMARK#','').split(',')
         correct = int(correct); total = int(total)
-        X.append(total)
+        if name in X:
+            X[name].append(total)
+        else:
+            X[name] = [total]
         if name in Y:
             Y[name].append(correct*1e2/total)
         else:
@@ -25,6 +28,6 @@ plt.xlabel('predictions')
 plt.ylabel('Accuracy (%)')
 
 for name, y in Y.items():
-    plt.plot(X,y, label=name)
+    plt.plot(X[name],y, label=name)
 plt.legend()
 plt.savefig(sys.argv[1]+'.png')
