@@ -62,6 +62,10 @@ static uint8_t crc_table[] = { /* BEGIN ADOPTION */
 }; /* END ADOPTION */
 
 uint8_t inline crc_hash(uint8_t bhr, uint8_t pc_index) {
+	// iteratively hash; this is equivalent to:
+	// hash = crc_table[bhr]
+	// hash = crc_table[pc_index ^ hash]
+	// compressed in one line
     return crc_table[pc_index ^ crc_table[bhr]];
 }
 

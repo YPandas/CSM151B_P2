@@ -13,7 +13,7 @@ tasks provided in the benchmark resource at a slightly higher performance cost.
 ### CRC Hash
 
 In CS 32, prof. Smallberg has mentioned a hash algorithm called CRC. Due to the
-simplicity, it has become my first tought. After some tweaking, it does the job.
+simplicity, it has become my first thought. After some tweaking, it does the job.
 
 The CRC hash works by iteratively computing the XOR result of the currenct hash
 with the incoming byte, then mapping it using a polynomial function to obtain 
@@ -33,8 +33,8 @@ After many trial and errors, the polynomials used in the [open source library](h
 original source code, the data comes from a humidity sensor and does not come
 with any explaination. Therefore, I was unable to find the polynomial behind.
 
-After adopting the polynomial data, the CRC hash function is written to accept
-`bhr` and `pc_index` and hash them iteratively.
+After adopting the polynomial data, the CRC hash function is implemented 
+successfully.
 
 ## Prediction Accuracy Comparison:
 
