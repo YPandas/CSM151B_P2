@@ -55,6 +55,7 @@ void ReorderBuffer::tick() {
     // mark its entry as completed
     int rob_index = Completed.front();
     store_[rob_index].completed = true;
+    DP(4, "ROB_INDEX="<<rob_index<<" COMPLETED, HEAD="<<head_index_);
     Completed.pop();
   }
 

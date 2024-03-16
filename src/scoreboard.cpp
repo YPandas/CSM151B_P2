@@ -84,10 +84,10 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
   int rob_index = ROB->allocate(trace);
 
   if(rs1_index != -1){
-    DP(3, "rs 1 index is not -1, it's " << rs1_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs1);
+    DP(4, "rs 1 index is not -1, it's " << rs1_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs1);
   }
   if(rs2_index != -1){
-    DP(3, "rs 2 index is not -1, it's " << rs2_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs2);
+    DP(4, "rs 2 index is not -1, it's " << rs2_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs2);
   }
 
   // update the RAT if instruction is writing to the register file
@@ -102,7 +102,7 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
   << " rs2 = " << rs2_index);
 
   // update the RST with newly allocated RS index
-  DP(3, "UPDATE RST:="<<rs_index<<", trace:"<< *trace <<std::endl);
+  DP(4, "UPDATE RST["<< rob_index <<"]:="<<rs_index<<", trace:"<< *trace <<std::endl);
   RST_[rob_index] = rs_index;
   return true;
 }
@@ -189,18 +189,18 @@ pipeline_trace_t* Scoreboard::writeback() {
         continue;
         
       // HERE!
-      DP(3, "RELEASE ROB :"
+      DP(4, "RELEASE ROB :"
             << ", FU_PC=0x" << std::hex << fu_entry.trace->PC
             << ", RS_PC=0x" << rs_entry.trace->PC
             << ", RS1_INDEX="<<std::dec << rs_entry.rs1_index
             << ", RS2_INDEX="<<rs_entry.rs2_index
             << ", ROB_INDEX="<<fu_entry.rob_index);
-      if(rs_entry.rs1_index == fu_entry.rob_index){
+      if(rs_entry.rs1_index == RST_[fu_entry.rob_index]){
         //operand value is now available
         DP(4, "updated rs1 index = " << rs_entry.rs1_index);
         rs_entry.rs1_index = -1;
       }
-      if(rs_entry.rs2_index == fu_entry.rob_index){
+      if(rs_entry.rs2_index == RST_[fu_entry.rob_index]){
         //operand value is now available
         DP(4, "updated rs2 index = " << rs_entry.rs2_index);
         rs_entry.rs2_index = -1;

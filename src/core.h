@@ -26,6 +26,7 @@
 #include "types.h"
 #include "emulator.h"
 #include "FU.h"
+#include <array>
 #include "gshare.h"
 
 namespace tinyrv {
