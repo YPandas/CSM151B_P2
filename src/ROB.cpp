@@ -69,6 +69,20 @@ void ReorderBuffer::tick() {
   // push the trace into commit port (using this->Committed.send())
   // remove the head entry
   // HERE!
+  if(head.completed){
+    //clear the RAT if it's still pointing to this ROB entry
+    if(RAT.get(head.trace->rd) == head_index_){
+      RAT.set(head.trace->rd, -1);
+    }
+    //update the RAT for instructions that write to the register file
+    if(head.trace->wb){
+      RAT.set(head.trace->rd, head_index_);
+    }
+    //push the trace into commit port
+    this->Committed.send(head.trace);
+    //remove the head entry
+    pop();
+  }
 }
 
 int ReorderBuffer::allocate(pipeline_trace_t* trace) {
