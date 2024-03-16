@@ -29,6 +29,7 @@ Scoreboard::Scoreboard(Core* core, uint32_t num_RSs, uint32_t rob_size)
   , RST_(rob_size, -1) {
   // create the ROB
   ROB_ = ReorderBuffer::Create(this, ROB_SIZE);
+
 }
 
 Scoreboard::~Scoreboard() {
@@ -83,10 +84,10 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
   int rob_index = ROB->allocate(trace);
 
   if(rs1_index != -1){
-    DP(4, "rs 1 index is not -1, it's " << rs1_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs1);
+    DP(3, "rs 1 index is not -1, it's " << rs1_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs1);
   }
   if(rs2_index != -1){
-    DP(4, "rs 2 index is not -1, it's " << rs2_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs2);
+    DP(3, "rs 2 index is not -1, it's " << rs2_index << " it's rob = " << rob_index << " the needed rs = " << trace->rs2);
   }
 
   // update the RAT if instruction is writing to the register file
@@ -101,6 +102,7 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
   << " rs2 = " << rs2_index);
 
   // update the RST with newly allocated RS index
+  DP(3, "UPDATE RST:="<<rs_index<<", trace:"<< *trace <<std::endl);
   RST_[rob_index] = rs_index;
   return true;
 }
@@ -170,6 +172,7 @@ pipeline_trace_t* Scoreboard::writeback() {
     DP(4, "accesing output...");
     if (!fu->Output.connected()) {
         DP(4, "Output port is not connected.");
+
     } else {
         DP(4, "Output port is connected.");
     }
@@ -186,7 +189,12 @@ pipeline_trace_t* Scoreboard::writeback() {
         continue;
         
       // HERE!
-      DP(4, "writing rs_index = " << i);
+      DP(3, "RELEASE ROB :"
+            << ", FU_PC=0x" << std::hex << fu_entry.trace->PC
+            << ", RS_PC=0x" << rs_entry.trace->PC
+            << ", RS1_INDEX="<<std::dec << rs_entry.rs1_index
+            << ", RS2_INDEX="<<rs_entry.rs2_index
+            << ", ROB_INDEX="<<fu_entry.rob_index);
       if(rs_entry.rs1_index == fu_entry.rob_index){
         //operand value is now available
         DP(4, "updated rs1 index = " << rs_entry.rs1_index);
@@ -227,8 +235,9 @@ pipeline_trace_t* Scoreboard::writeback() {
 pipeline_trace_t* Scoreboard::commit() {
   pipeline_trace_t* trace = nullptr;
   if (!ROB_->Committed.empty()) {
-    DP(4, "commiting...");
+    
     trace = ROB_->Committed.front();
+    DP(4, "commiting: "<<*trace);
     ROB_->Committed.pop();
   }
   return trace;
