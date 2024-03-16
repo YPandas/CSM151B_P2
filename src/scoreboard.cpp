@@ -44,12 +44,19 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
   // check for structural hazards return false if found
   FUType requiredType = trace->fu_type;
   auto& fu = core->FUs_[(int)requiredType];
-  if(fu->isBusy){
-    //if the function unit is busy
+
+  if(ROB->is_full()){
+    core->branch_stalls_ = 1;
     return false;
   } else {
-    //if the unit is free
+    core->branch_stalls_ = 0;
     fu->isBusy = true;
+  }
+
+  if(RS_.is_full()){
+    //DP(4, "the RS is full");
+    core->branch_stalls_ = 1;
+    return false;
   }
 
   // TODO:
@@ -83,7 +90,6 @@ bool Scoreboard::issue(pipeline_trace_t* trace) {
 
 std::vector<pipeline_trace_t*> Scoreboard::execute() {
   std::vector<pipeline_trace_t*> traces;
-  auto& FUs = core_->FUs_;
 
   // TODO:
   // search the RS for any valid and not yet running entry
@@ -96,10 +102,12 @@ std::vector<pipeline_trace_t*> Scoreboard::execute() {
     // HERE!
     if(rs_entry.rs1_index == -1 && rs_entry.rs2_index == -1){
       //if both rs are ready
+      DP(4, "the executed rs index = " << i);
       FUType requiredType = rs_entry.trace->fu_type;
       auto& fu = core_->FUs_[(int)requiredType];
       auto trace = rs_entry.trace;
-      fu->Input.send({trace, 0, 0});
+      FunctionalUnit::entry_t packet = {trace, rs_entry.rob_index, i};
+      fu->Input.send(packet);
       rs_entry.running = true;
       traces.push_back(trace);
     }
@@ -109,14 +117,18 @@ std::vector<pipeline_trace_t*> Scoreboard::execute() {
 }
 
 pipeline_trace_t* Scoreboard::writeback() {
+  
   pipeline_trace_t* trace = nullptr;
   auto& ROB = ROB_;
   auto& FUs = core_->FUs_;
 
   // process the first FU to have completed execution by accessing its output
   for (auto& fu : FUs) {
-    if (fu->Output.empty())
+    if (fu->Output.empty()){
+      DP(4, "fu output is empty, so carry on(but still free the FU)");
+      fu->isBusy = false;
       continue;
+    }
 
     auto& fu_entry = fu->Output.front();
 
@@ -125,6 +137,7 @@ pipeline_trace_t* Scoreboard::writeback() {
     // invalidate matching rs_index by setting it to -1 to imply that the operand value is now available
     for (uint32_t i = 0; i < RS_.size(); ++i) { 
       auto& rs_entry = RS_[i];
+      //DP(4, "rs_entry is valid = " << (rs_entry.valid ? "true" : "false"));
       if (!rs_entry.valid)
         continue;
         
@@ -148,13 +161,15 @@ pipeline_trace_t* Scoreboard::writeback() {
     ROB->Completed.send(fu_entry.rob_index);
     // TODO: 
     // deallocate the RS entry of this FU
-    RS_[fu_entry.rs_index].valid = -1;
+    DP(4, "Removing RS entry at index: " << fu_entry.rs_index);
+    RS_.remove(fu_entry.rs_index);
     // set the returned trace
     trace = fu_entry.trace;
 
     // remove FU entry
+    fu->isBusy = false;
     fu->Output.pop();
-
+  
     // we process one FU at the time
     break;
   }
