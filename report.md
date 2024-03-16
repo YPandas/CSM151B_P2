@@ -33,57 +33,30 @@ After many trial and errors, the polynomials used in the [open source library](h
 original source code, the data comes from a humidity sensor and does not come
 with any explaination. Therefore, I was unable to find the polynomial behind.
 
-In `src/crc8.c`, the author states:
-
-> The SHT75 humidity sensor is capable of calculating an 8 bit CRC checksum to
-> ensure data integrity. The lookup table crc_table[] is used to recalculate
-> the CRC. 
-
-After adopting the polynomial data, the CRC hash function is implemented using 
-the provided data. 
+After adopting the polynomial data, the CRC hash function is written to accept
+`bhr` and `pc_index` and hash them iteratively.
 
 ## Prediction Accuracy Comparison:
 
-The performance records for the following tasks are listed below:
+A benchmark is done for all 8 provided tasks, but due to the page limit, the 
+following one are chosen to be shown:
 
+- **qsort**: highest improvement in accuracy and highest decrase in performance.
+- **towers**: lowest overall accuracy.
+- **spmv**: largest amount of work.
 
 |Task | Accuracy | Performance Cost |
 |---|---|---|
-| dhrystone | ![dhrystone accuracy](./dhrystone.total.log.png) | ![dhrystone timing](./dhrystone.total.log.timing.png) |
-| median | ![median accuracy](./median.total.log.png) | ![median timing](./median.total.log.timing.png) |
-| memcpy | ![memcpy accuracy](./memcpy.total.log.png) | ![memcpy timing](./memcpy.total.log.timing.png) |
-| multiply | ![multiply accuracy](./multiply.total.log.png) | ![multiply timing](./multiply.total.log.timing.png) |
 | qsort | ![qsort accuracy](./qsort.total.log.png) | ![qsort timing](./qsort.total.log.timing.png) |
-| rsort | ![rsort accuracy](./rsort.total.log.png) | ![rsort timing](./rsort.total.log.timing.png) |
 | spmv | ![spmv accuracy](./spmv.total.log.png) | ![spmv timing](./spmv.total.log.timing.png) |
 | towers | ![towers accuracy](./towers.total.log.png) | ![towers timing](./towers.total.log.timing.png) |
 
-```
------ dhrystone -----
-PERF: instrs=230174, cycles=2716722, bpred=88%, hashtime=68.613
-PERF: instrs=230203, cycles=2717502, bpred=87%, hashtime=65.3458
------ median -----
-PERF: instrs=12152, cycles=101114, bpred=74%, hashtime=64.4286
-PERF: instrs=12152, cycles=101203, bpred=74%, hashtime=61.2913
------ memcpy -----
-PERF: instrs=38158, cycles=367481, bpred=92%, hashtime=69.4273
-PERF: instrs=38158, cycles=367442, bpred=92%, hashtime=67.259
------ multiply -----
-PERF: instrs=28002, cycles=81962, bpred=82%, hashtime=67.0102
-PERF: instrs=28011, cycles=82019, bpred=81%, hashtime=61.7083
------ qsort -----
-PERF: instrs=144162, cycles=2756249, bpred=70%, hashtime=74.2556
-PERF: instrs=144162, cycles=2758151, bpred=66%, hashtime=68.3194
------ rsort -----
-PERF: instrs=191917, cycles=2559653, bpred=90%, hashtime=65.5773
-PERF: instrs=191917, cycles=2559605, bpred=91%, hashtime=61.3783
------ spmv -----
-PERF: instrs=1982861, cycles=5270298, bpred=77%, hashtime=66.6892
-PERF: instrs=1982834, cycles=5265771, bpred=76%, hashtime=65.0342
------ towers -----
-PERF: instrs=10519, cycles=104157, bpred=65%, hashtime=71.237
-PERF: instrs=10519, cycles=104184, bpred=64%, hashtime=63.6839
-```
+
+<!-- | dhrystone | ![dhrystone accuracy](./dhrystone.total.log.png) | ![dhrystone timing](./dhrystone.total.log.timing.png) |
+| median | ![median accuracy](./median.total.log.png) | ![median timing](./median.total.log.timing.png) |
+| memcpy | ![memcpy accuracy](./memcpy.total.log.png) | ![memcpy timing](./memcpy.total.log.timing.png) |
+| multiply | ![multiply accuracy](./multiply.total.log.png) | ![multiply timing](./multiply.total.log.timing.png) | -->
+<!-- | rsort | ![rsort accuracy](./rsort.total.log.png) | ![rsort timing](./rsort.total.log.timing.png) | -->
 
 ## Results Summary
 
